@@ -130,15 +130,7 @@
 
     </style>
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.249.1.min.js"></script>
-    <script>
-        if (window.AWS) {
-            AWS.config.region = 'eu-west-1';
-            // AWS.config.accessKeyId = 'AKIAID5UD6OGW3IKYK4Q';
-            // AWS.config.secretAccessKey = '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';
-            AWS.config.accessKeyId = 'AKIAIRV4H6LMPQ2AQC4A';
-            AWS.config.secretAccessKey = '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';
-        }
-    </script>
+    <script src="keys.js"></script>
     <script src="sre_browser.js"></script>
     <script src="index.js"></script>
 </head>
@@ -156,7 +148,7 @@
         </p>
 
         <div class="mathfield" id='mf' >x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}</div>
-        <div id='output'>
+        <div id='output' style='display:none;'>
             <div id='output-text'></div>
             <div id='output-ssml'></div>
         </div>

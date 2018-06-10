@@ -223,12 +223,12 @@
 
         <h2>Voice</h2>
         <div class='toolbar'>
-            <button onclick='setVoice("Joanna")'>Joanna</button>
-            <button onclick='setVoice("Matthew")'>Matthew</button>
-            <button onclick='setVoice("Justin")'>Justin</button>
-            <button onclick='setVoice("Kendra")'>Kendra</button>
-            <button onclick='setVoice("Brian")'>Brian</button>
-            <button onclick='setVoice("Nicole")'>Nicole</button>
+            <button id="JoannaVoiceButton" onclick='setVoice("Joanna")'>Joanna</button>
+            <button id="MatthewVoiceButton" onclick='setVoice("Matthew")'>Matthew</button>
+            <button id="JustinVoiceButton" onclick='setVoice("Justin")'>Justin</button>
+            <button id="KendraVoiceButton" onclick='setVoice("Kendra")'>Kendra</button>
+            <button id="BrianVoiceButton" onclick='setVoice("Brian")'>Brian</button>
+            <button id="NicoleVoiceButton" onclick='setVoice("Nicole")'>Nicole</button>
         </div>
 
 
@@ -379,13 +379,22 @@ function setSpeed(speed) {
     })
 }
 
-
 function setVoice(voice) {
     mf.setConfig({
         speechEngineVoice: voice
     })
+    console.log(voice + "VoiceButton");
+
+    document.getElementById("JoannaVoiceButton").classList.remove("primary");
+    document.getElementById("MatthewVoiceButton").classList.remove("primary");
+    document.getElementById("JustinVoiceButton").classList.remove("primary");
+    document.getElementById("KendraVoiceButton").classList.remove("primary");
+    document.getElementById("BrianVoiceButton").classList.remove("primary");
+    document.getElementById("NicoleVoiceButton").classList.remove("primary");
+    document.getElementById(voice + "VoiceButton").classList.add("primary");
 }
 
+setVoice("Matthew");
 </script>
 
 <script>

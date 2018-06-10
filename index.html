@@ -22,6 +22,10 @@
             margin: auto;
         }
 
+        .eqselected {
+            background: #ecc;
+        }
+
         .mathfield, .equation {
             font-size: 32px;
             color: #99d;
@@ -139,15 +143,16 @@
         <h2>How to Solve Quadratic Equations </h2>
         <p>Quadratic equations polynomial equation in a single variable where 
             the highest exponent of the variable is 2:</p>
-        <div class='equation'>$$ax^2+bx+c=0$$</div>
+        <!-- <div class='equation'>$$ax^2+bx+c=0$$</div> -->
 
         <p>Identify the values of $$a$$, $$b$$, and c in the quadratic equation. 
             The variable $$a$$ is the coefficient of the $$x^2$$ term, $$b$$ is the 
             coefficient of the $$x$$ term, and $$c$$ is the constant. For the 
             equation $$3x^2 -5x - 8 = 0$$, $$a = 3$$, $$b = -5$$, and $$c = -8$$. 
         </p>
-
-        <div class="mathfield" id='mf' >x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}</div>
+<!-- x=\frac{-b\pm\sqrt{b^2-4ac}}{2a} -->
+<!-- 0 = \frac{-2 \pm \sqrt{2^2 - 4 \times 1 \times 3}}{2 \times 2}-->
+        <div class="mathfield" id='mf' >(3 \times 2) + 1</div>
         <div id='output'>
             <div id='output-text'></div>
             <div id='output-ssml'></div>
@@ -244,6 +249,7 @@
 <!-- <script src="../../../vendor/require.js"></script> -->
 <script> 
     let mf;
+    let ast;
     // require(['mathlive/mathlive'], function(MathLive) {   // DEBUG
     window.MathLive = MathLive;
     MathLive.renderMathInDocument({ignoreClass: "mathfield"});
@@ -252,6 +258,46 @@
         onContentDidChange: mf => {
             document.getElementById('output-text').textContent = mf.text('spoken-text');
             document.getElementById('output-ssml').textContent = mf.text('spoken-ssml');
+            console.log("MFLATEX", mf.latex());
+            const latex = mf.latex();
+            console.log("MFLATEX", latex);
+            ast = MathLive.latexToAST(latex);
+            console.log("MFAST", ast);
+
+            ast_nodes_to_process = [ast];
+
+            // Traverse tree and generate link to parent, prev and next siblings
+            while (ast_nodes_to_process.length > 0) {
+                let ast_node_to_process = ast_nodes_to_process.pop();
+                console.log("ASTNODE", ast_node_to_process)
+                let ast_args = ast_node_to_process.arg;
+                if (ast_args !== undefined) {
+                    // Do a first pass and convert terminal nodes to a dictionary format
+                    for (let ast_arg_idx = 0; ast_arg_idx < ast_args.length; ast_arg_idx++) {
+                        if (ast_args[ast_arg_idx].arg === undefined) {
+                            ast_args[ast_arg_idx] = {content: ast_args[ast_arg_idx]};
+                        }
+                    }
+
+                    // Now, add parents and siblings accordingly.
+                    for (let ast_arg_idx = 0; ast_arg_idx < ast_args.length; ast_arg_idx++) {
+                        ast_arg = ast_args[ast_arg_idx];
+
+                        ast_arg.parent = ast_node_to_process;
+
+                        if (ast_arg_idx > 0) {
+                            ast_arg.prev_sibling = ast_args[ast_arg_idx - 1];
+                        }
+                        if (ast_arg_idx < ast_args.length - 1) {
+                            ast_arg.next_sibling = ast_args[ast_arg_idx + 1];
+                        }
+
+                        ast_arg.parent = ast_node_to_process;
+                    }
+
+                    ast_nodes_to_process.push.apply(ast_nodes_to_process, ast_args);
+                }
+            }
         },
 
         onReadAloudStatus: status => {
@@ -263,7 +309,7 @@
                 document.getElementById('playing-toolbar').style.display = 'flex';
                 document.getElementById('ready-toolbar').style.display = 'none';
             }
-            console.log(status);
+            // console.log(status);
         },
         
         textToSpeechRules: 'sre',
@@ -335,6 +381,81 @@ function setSpeed(speed) {
             ][speed]
     })
 }
+</script>
+
+<script>
+
+function select_by_atom_id(atom_ids) {
+    atom_ids.forEach(function (atom_id) {
+        var atom_divs = document.querySelectorAll("[data-atom-id=\"" + atom_id + "\"]");
+        for (atom_idx = 0; atom_idx < atom_divs.length; atom_idx++) {
+            atom_divs[atom_idx].classList.add("eqselected");
+        }
+    });
+}
+
+function clear_atom_selection() {
+    var atom_divs = document.querySelectorAll("*[data-atom-id]");
+    for (atom_idx = 0; atom_idx < atom_divs.length; atom_idx++) {
+        atom_divs[atom_idx].classList.remove("eqselected");
+    }
+}
+</script>
+
+<script>
+// Keyboard navigation
+let navigation_mode = false;
+let curr_ast_node;
+
+document.addEventListener('keydown', function(event) {
+    // Esc
+    if (event.keyCode === 27) {
+        console.log("Esc");
+        navigation_mode = !navigation_mode;
+        curr_ast_node = ast;
+    }
+    if (navigation_mode && event.shiftKey) {
+        // Left arrow
+        if (event.keyCode === 37) {
+            if (curr_ast_node.prev_sibling === undefined) {
+                console.log("At the first child");
+            } else {
+                curr_ast_node = curr_ast_node.prev_sibling;
+            }
+            console.log("ASTNODENAV", curr_ast_node);
+        }
+
+        // Up arrow
+        if (event.keyCode === 38) {
+            if (curr_ast_node.arg === undefined) {
+                console.log("At a leaf");
+            } else {
+                curr_ast_node = curr_ast_node.arg[0];
+            }
+            console.log("ASTNODENAV", curr_ast_node);
+        }
+
+        // Right arrow
+        if (event.keyCode === 39) {
+            if (curr_ast_node.next_sibling === undefined) {
+                console.log("At the last child");
+            } else {
+                curr_ast_node = curr_ast_node.next_sibling;
+            }
+            console.log("ASTNODENAV", curr_ast_node);
+        }
+
+        // Down arrow
+        if (event.keyCode === 40) {
+            if (curr_ast_node.parent === undefined) {
+                console.log("At the root");
+            } else {
+                curr_ast_node = curr_ast_node.parent;
+            }
+            console.log("ASTNODENAV", curr_ast_node);
+        }
+    }
+});
 </script>
 
 </body></html>

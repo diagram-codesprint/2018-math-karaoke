@@ -11,3 +11,4 @@ The project doesn't have to involve very advanced math, so no worries if you’r
 This would also be an opportunity to experiment with higher quality text-to-speech reading of math equations, including control of prosody (pause, volume, pitch, intensity) using SSML (if you're into that sort of thing).
 
 At the end of the project, we will have authored some simple content (tutorial on solving quadratic equations?) that will be easier for dyslexic students to access.
+

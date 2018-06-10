@@ -248,45 +248,49 @@
         onContentDidChange: mf => {
             document.getElementById('output-text').textContent = mf.text('spoken-text');
             document.getElementById('output-ssml').textContent = mf.text('spoken-ssml');
-            console.log("MFLATEX", mf.latex());
-            const latex = mf.latex();
-            console.log("MFLATEX", latex);
-            ast = MathLive.latexToAST(latex);
-            console.log("MFAST", ast);
+            try {
+                console.log("MFLATEX", mf.latex());
+                const latex = mf.latex();
+                console.log("MFLATEX", latex);
+                ast = MathLive.latexToAST(latex);
+                console.log("MFAST", ast);
 
-            ast_nodes_to_process = [ast];
+                ast_nodes_to_process = [ast];
 
-            // Traverse tree and generate link to parent, prev and next siblings
-            while (ast_nodes_to_process.length > 0) {
-                let ast_node_to_process = ast_nodes_to_process.pop();
-                console.log("ASTNODE", ast_node_to_process)
-                let ast_args = ast_node_to_process.arg;
-                if (ast_args !== undefined) {
-                    // Do a first pass and convert terminal nodes to a dictionary format
-                    for (let ast_arg_idx = 0; ast_arg_idx < ast_args.length; ast_arg_idx++) {
-                        if (ast_args[ast_arg_idx].arg === undefined) {
-                            ast_args[ast_arg_idx] = {content: ast_args[ast_arg_idx]};
+                // Traverse tree and generate link to parent, prev and next siblings
+                while (ast_nodes_to_process.length > 0) {
+                    let ast_node_to_process = ast_nodes_to_process.pop();
+                    console.log("ASTNODE", ast_node_to_process)
+                    let ast_args = ast_node_to_process.arg;
+                    if (ast_args !== undefined) {
+                        // Do a first pass and convert terminal nodes to a dictionary format
+                        for (let ast_arg_idx = 0; ast_arg_idx < ast_args.length; ast_arg_idx++) {
+                            if (ast_args[ast_arg_idx].arg === undefined) {
+                                ast_args[ast_arg_idx] = {content: ast_args[ast_arg_idx]};
+                            }
                         }
+
+                        // Now, add parents and siblings accordingly.
+                        for (let ast_arg_idx = 0; ast_arg_idx < ast_args.length; ast_arg_idx++) {
+                            ast_arg = ast_args[ast_arg_idx];
+
+                            ast_arg.parent = ast_node_to_process;
+
+                            if (ast_arg_idx > 0) {
+                                ast_arg.prev_sibling = ast_args[ast_arg_idx - 1];
+                            }
+                            if (ast_arg_idx < ast_args.length - 1) {
+                                ast_arg.next_sibling = ast_args[ast_arg_idx + 1];
+                            }
+
+                            ast_arg.parent = ast_node_to_process;
+                        }
+
+                        ast_nodes_to_process.push.apply(ast_nodes_to_process, ast_args);
                     }
-
-                    // Now, add parents and siblings accordingly.
-                    for (let ast_arg_idx = 0; ast_arg_idx < ast_args.length; ast_arg_idx++) {
-                        ast_arg = ast_args[ast_arg_idx];
-
-                        ast_arg.parent = ast_node_to_process;
-
-                        if (ast_arg_idx > 0) {
-                            ast_arg.prev_sibling = ast_args[ast_arg_idx - 1];
-                        }
-                        if (ast_arg_idx < ast_args.length - 1) {
-                            ast_arg.next_sibling = ast_args[ast_arg_idx + 1];
-                        }
-
-                        ast_arg.parent = ast_node_to_process;
-                    }
-
-                    ast_nodes_to_process.push.apply(ast_nodes_to_process, ast_args);
                 }
+            } catch (err) {
+                ast = null;
             }
         },
 
@@ -392,9 +396,11 @@ let curr_ast_node;
 document.addEventListener('keydown', function(event) {
     // Esc
     if (event.keyCode === 27) {
-        console.log("Esc");
-        navigation_mode = !navigation_mode;
-        curr_ast_node = ast;
+        console.log("Toggling navigation mode");
+        if (ast !== null) {
+            navigation_mode = !navigation_mode;
+            curr_ast_node = ast;
+        }
     }
     if (navigation_mode && event.shiftKey) {
         // Left arrow
@@ -409,10 +415,10 @@ document.addEventListener('keydown', function(event) {
 
         // Up arrow
         if (event.keyCode === 38) {
-            if (curr_ast_node.arg === undefined) {
-                console.log("At a leaf");
+            if (curr_ast_node.parent === undefined) {
+                console.log("At the root");
             } else {
-                curr_ast_node = curr_ast_node.arg[0];
+                curr_ast_node = curr_ast_node.parent;
             }
             console.log("ASTNODENAV", curr_ast_node);
         }
@@ -429,10 +435,10 @@ document.addEventListener('keydown', function(event) {
 
         // Down arrow
         if (event.keyCode === 40) {
-            if (curr_ast_node.parent === undefined) {
-                console.log("At the root");
+            if (curr_ast_node.arg === undefined) {
+                console.log("At a leaf");
             } else {
-                curr_ast_node = curr_ast_node.parent;
+                curr_ast_node = curr_ast_node.arg[0];
             }
             console.log("ASTNODENAV", curr_ast_node);
         }

@@ -21,7 +21,7 @@ console.
 Store them in a file called keys.js with the following format
 ```javascript
 if (window.AWS) {
-	AWS.config.region = 'eu-west-1';
+    AWS.config.region = 'eu-west-1';
     AWS.config.accessKeyId = '<YOUR-KEY>';
     AWS.config.secretAccessKey = '<YOUR-SECRET>';
 }
